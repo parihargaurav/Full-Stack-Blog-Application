@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import { formatISO9075 } from "date-fns";
+import { format } from "date-fns";
 import { Link } from "react-router-dom";
 
 export default function Post({
@@ -24,7 +24,8 @@ export default function Post({
         </Link>
         <p className="info">
           <a className="author">{author.username}</a>
-          <time>{formatISO9075(new Date(createdAt))}</time>
+          <br/>
+          <time>{format(new Date(createdAt), "MMM dd yyyy")}</time>
         </p>
         <p className="summary">{summary}</p>
       </div>

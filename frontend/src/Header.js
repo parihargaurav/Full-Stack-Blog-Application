@@ -35,6 +35,7 @@ export default function Header() {
         {username && (
           <>
             <Link
+              to="/create"
               style={{ fontWeight: "bold", fontStyle: "italic" }}
             >
               Create new post
