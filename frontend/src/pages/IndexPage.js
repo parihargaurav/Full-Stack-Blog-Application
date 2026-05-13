@@ -1,20 +1,20 @@
 import Post from "../Post";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 
 export default function IndexPage() {
-  const [posts,setPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
   useEffect(() => {
-    fetch('http://localhost:4000/post').then(response => {
-      response.json().then(posts => {
+    fetch("http://localhost:4000/post").then((response) => {
+      response.json().then((posts) => {
         setPosts(posts);
       });
     });
   }, []);
   return (
-    <>
-      {posts.length > 0 && posts.map(post => (
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      {posts.map((post) => (
         <Post {...post} />
       ))}
-    </>
+    </div>
   );
 }
