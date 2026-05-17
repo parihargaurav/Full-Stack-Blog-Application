@@ -97,6 +97,7 @@ export default function PostPage() {
         <img
           src={`http://localhost:4000/${postInfo.cover}`}
           alt=""
+          fetchpriority="high"   // tells browser to load this first
           className="h-60 w-full object-cover"
         />
       </div>

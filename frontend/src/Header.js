@@ -46,7 +46,7 @@ export default function Header() {
     <header className="border-b bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Left Side */}
-        <Link to="/" className="text-3xl font-bold tracking-tight text-black">
+        <Link to="/" aria-label="Go to homepage" className="text-3xl font-bold tracking-tight text-black">
           🏠
         </Link>
 

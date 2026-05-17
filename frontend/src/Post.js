@@ -58,6 +58,8 @@ export default function Post({
           <img
             src={"http://localhost:4000/" + cover}
             alt=""
+            loading="lazy" //  don't load images until needed
+            decoding="async" //  don't block rendering
             className="h-[180px] w-full rounded-xl object-cover"
           />
         </Link>

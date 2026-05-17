@@ -1,27 +1,37 @@
-
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
-import Layout from "./Layout";
-import IndexPage from "./pages/IndexPage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import { UserContextProvider } from "./UserContext";
-import CreatePost from "./pages/CreatePost";
-import PostPage from "./pages/PostPage";
-import EditPost from "./pages/EditPost";
+
+// lazy load all pages
+const Layout = lazy(() => import("./Layout"));
+const IndexPage = lazy(() => import("./pages/IndexPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const CreatePost = lazy(() => import("./pages/CreatePost"));
+const PostPage = lazy(() => import("./pages/PostPage"));
+const EditPost = lazy(() => import("./pages/EditPost"));
 
 function App() {
   return (
     <UserContextProvider>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<IndexPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/create" element={<CreatePost />} />
-          <Route path="/post/:id" element={<PostPage />} />
-          <Route path="/edit/:id" element={<EditPost />} />
-        </Route>
-      </Routes>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-screen text-gray-400 text-sm">
+            Loading...
+          </div>
+        }
+      >
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<IndexPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/create" element={<CreatePost />} />
+            <Route path="/post/:id" element={<PostPage />} />
+            <Route path="/edit/:id" element={<EditPost />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </UserContextProvider>
   );
 }

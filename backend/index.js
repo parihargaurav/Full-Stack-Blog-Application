@@ -22,7 +22,10 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("uploads", {
+  maxAge: "7d",        //  browser caches images for 7 days
+  etag: true,
+}));
 
 mongoose
   .connect(process.env.MONGO_URL)
