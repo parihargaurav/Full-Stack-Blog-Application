@@ -9,11 +9,27 @@ export default function Header() {
   useEffect(() => {
     fetch("http://localhost:4000/profile", {
       credentials: "include",
-    }).then((response) => {
-      response.json().then((userInfo) => {
+    })
+      .then((response) => {
+        if (!response.ok) {
+          if (response.status === 401) {
+            setUserInfo(null); // treat as guest
+            return;
+          }
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((userInfo) => {
         setUserInfo(userInfo);
+      })
+      .catch((err) => {
+        if (!err.message.includes("401")) {
+          //  replace the console.error with this
+          console.error("Profile fetch error", err);
+        }
+        setUserInfo(null);
       });
-    });
   }, [setUserInfo]);
 
   function logout() {
@@ -26,14 +42,11 @@ export default function Header() {
 
   const username = userInfo?.username;
 
- return (
+  return (
     <header className="border-b bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Left Side */}
-        <Link
-          to="/"
-          className="text-3xl font-bold tracking-tight text-black"
-        >
+        <Link to="/" className="text-3xl font-bold tracking-tight text-black">
           🏠
         </Link>
 
@@ -48,23 +61,15 @@ export default function Header() {
                 Write
               </Link>
 
-              <span className="text-gray-500">
-                {username}
-              </span>
+              <span className="text-gray-500">{username}</span>
 
-              <button
-                onClick={logout}
-                className="transition hover:text-black"
-              >
+              <button onClick={logout} className="transition hover:text-black">
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link
-                to="/login"
-                className="transition hover:text-black"
-              >
+              <Link to="/login" className="transition hover:text-black">
                 Sign in
               </Link>
 

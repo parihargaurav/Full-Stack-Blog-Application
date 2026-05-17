@@ -13,7 +13,7 @@ export default function IndexPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       {posts.map((post) => (
-        <Post {...post} />
+        <Post key = {post._id}{...post} />
       ))}
     </div>
   );

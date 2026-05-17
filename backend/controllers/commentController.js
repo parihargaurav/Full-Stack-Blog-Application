@@ -1,14 +1,14 @@
 // controllers/commentController.js
 import Comment from "../models/Comment.js";
 
-// GET /api/comments/:postId — get all top‑level comments + their replies
+// GET /comments/:postId — get all top‑level comments + their replies
 export const getComments = async (req, res) => {
   try {
     const comments = await Comment.find({
       post: req.params.postId,
       parentComment: null, // top‑level only
     })
-      .populate("author", "username profilePic")
+      .populate("author")
       .sort({ createdAt: -1 });
 
     const withReplies = await Promise.all(
@@ -16,7 +16,7 @@ export const getComments = async (req, res) => {
         const replies = await Comment.find({
           parentComment: comment._id,
         })
-          .populate("author", "username profilePic")
+          .populate("author")
           .sort({ createdAt: 1 });
         return { ...comment.toObject(), replies };
       })
@@ -28,7 +28,7 @@ export const getComments = async (req, res) => {
   }
 };
 
-// POST /api/comments/:postId — create a comment
+// POST /comments/:postId — create a comment
 export const createComment = async (req, res) => {
   try {
     const { content, parentComment } = req.body;
@@ -40,7 +40,7 @@ export const createComment = async (req, res) => {
     });
 
     await comment.save();
-    await comment.populate("author", "username profilePic");
+    await comment.populate("author");
 
     res.status(201).json(comment);
   } catch (err) {
@@ -48,7 +48,7 @@ export const createComment = async (req, res) => {
   }
 };
 
-// DELETE /api/comments/:id — delete own comment
+// DELETE /comments/:id — delete own comment
 export const deleteComment = async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);

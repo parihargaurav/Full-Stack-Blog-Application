@@ -59,16 +59,12 @@ export const getProfile = (req, res) => {
   const { token } = req.cookies;
 
   if (!token) {
-    return res.status(401).json({
-      error: "No token found",
-    });
+    return res.status(200).json(null); //  was 401, now silent
   }
 
   jwt.verify(token, process.env.JWT_SECRET, {}, (err, info) => {
     if (err) {
-      return res.status(401).json({
-        error: "Invalid token",
-      });
+      return res.status(200).json(null); //  was 401, now silent
     }
 
     res.json(info);

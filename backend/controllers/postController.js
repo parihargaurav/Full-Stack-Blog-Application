@@ -99,7 +99,9 @@ export const updatePost = async (req, res) => {
 
 export const getPosts = async (req, res) => {
   const posts = await Post.find()
-    .populate("author", ["username"])
+    .populate("author")
+    .populate("repostedBy") // who reposted
+    .populate("originalPost")                     // linked original post
     .sort({ createdAt: -1 })
     .limit(20);
 
