@@ -39,7 +39,7 @@ export default function CreatePost() {
             style={{ fontFamily: 'Georgia, serif' }}>
           Write your story
         </h1>
-        <p className="text-sm text-gray-400 tracking-widest uppercase">
+        <p className="text-sm text-gray-600 tracking-widest uppercase">
           Draft
         </p>
       </div>

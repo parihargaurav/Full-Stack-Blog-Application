@@ -21,7 +21,7 @@ function CommentItem({ comment, onReply, currentUserId, onDelete }) {
           <span className="font-semibold text-sm text-gray-900">
             {comment.author?.username}
           </span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-600">
             {new Date(comment.createdAt).toLocaleDateString()}
           </span>
         </div>
@@ -31,14 +31,14 @@ function CommentItem({ comment, onReply, currentUserId, onDelete }) {
         <div className="flex items-center gap-4 mt-2">
           <button
             onClick={() => setShowReplyBox(!showReplyBox)}
-            className="text-xs text-gray-400 hover:text-green-600 transition-colors"
+            className="text-xs text-gray-600 hover:text-green-600 transition-colors"
           >
             Reply
           </button>
           {comment.author?._id === currentUserId && (
             <button
               onClick={() => onDelete(comment._id)}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+              className="text-xs text-gray-600 hover:text-red-500 transition-colors"
             >
               Delete
             </button>
@@ -213,9 +213,9 @@ export default function CommentsSection({ postId, currentUserId, checkAuth }) {
 
       {/* Comments list */}
       {loading ? (
-        <p className="text-gray-400 text-sm">Loading responses...</p>
+        <p className="text-gray-600 text-sm">Loading responses...</p>
       ) : comments.length === 0 ? (
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-600 text-sm">
           No responses yet. Be the first to respond!
         </p>
       ) : (

@@ -34,7 +34,7 @@ export default function RepostButton({ postId, initialCount, initialReposted, ch
       className={`flex items-center gap-2 transition-colors duration-200 ${
         reposted
           ? "text-green-600"
-          : "text-gray-400 hover:text-green-500"
+          : "text-gray-600 hover:text-green-500"
       }`}
     >
       <svg

@@ -52,7 +52,7 @@ export default function ClapButton({ postId, initialClaps, initialUserClaps, che
         } ${
           userClaps > 0
             ? "text-green-600"
-            : "text-gray-400 group-hover:text-green-500"
+            : "text-gray-600 group-hover:text-green-500"
         }`}
       >
         👏

@@ -54,7 +54,7 @@ export default function EditPost() {
             style={{ fontFamily: 'Georgia, serif' }}>
           Edit your story
         </h1>
-        <p className="text-sm text-gray-400 tracking-widest uppercase">
+        <p className="text-sm text-gray-600 tracking-widest uppercase">
           Editing 
         </p>
       </div>

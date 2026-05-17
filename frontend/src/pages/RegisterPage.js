@@ -38,7 +38,7 @@ export default function RegisterPage() {
             style={{ fontFamily: 'Georgia, serif' }}>
           Create your account
         </h2>
-        <p className="text-sm text-gray-400 mb-8">
+        <p className="text-sm text-gray-600 mb-8">
           Start reading and writing today.
         </p>
 
@@ -89,7 +89,7 @@ export default function RegisterPage() {
           <div className="flex-1 border-t border-gray-100" />
         </div>
 
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-sm text-gray-600">
           Already have an account?{' '}
           <a href="/login" className="text-gray-900 font-medium underline underline-offset-2 hover:text-black">
             Login

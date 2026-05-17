@@ -22,7 +22,7 @@ export default function Post({
       <div className="flex flex-1 flex-col justify-between">
         {/* 👇 Add the repost label here */}
         {isRepost && repostedBy && (
-          <p className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+          <p className="text-xs text-gray-600 mb-2 flex items-center gap-1">
             🔁 Reposted by{" "}
             <span className="font-medium text-gray-600">
               {repostedBy.username}

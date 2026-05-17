@@ -48,7 +48,7 @@ export default function LoginPage() {
             style={{ fontFamily: 'Georgia, serif' }}>
           Sign in to your account
         </h2>
-        <p className="text-sm text-gray-400 mb-8">
+        <p className="text-sm text-gray-600 mb-8">
           Continue your reading journey.
         </p>
 
@@ -102,7 +102,7 @@ export default function LoginPage() {
           <div className="flex-1 border-t border-gray-100" />
         </div>
 
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-sm text-gray-600">
           Don't have an account?{' '}
           <a href="/register" className="text-gray-900 font-medium underline underline-offset-2 hover:text-black">
             Create one
