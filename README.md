@@ -117,6 +117,14 @@ npm start
 - Uploaded images are served from `backend/uploads`.
 - The backend verifies JWT tokens from cookies on protected routes.
 
+## SEO & Performance
+
+- `frontend/public/index.html` includes a `meta description` for search and sharing.
+- The HTML includes `viewport` and `theme-color` meta tags for mobile-friendly rendering.
+- A `link rel="preconnect"` to `http://localhost:4000` is added for backend asset performance.
+- The app uses semantic structure with `<main>`, `<header>`, and accessible navigation.
+- The site includes a favicon and PWA manifest references to improve browser metadata.
+
 ## Development Tips
 
 - Start backend first so the frontend can connect to the API.
