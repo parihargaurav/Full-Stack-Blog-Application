@@ -29,7 +29,8 @@ This project includes:
 
 - Frontend: React, React Router, Tailwind CSS, React Quill
 - Backend: Node.js, Express, Mongoose, JWT, Multer
-- Database: MongoDB
+- Database: MongoDB with Redis caching layer
+- Cache: Redis (in-memory data store for high-performance caching)
 - Authentication: secure cookies and JSON Web Tokens
 
 ## Repository Structure
@@ -47,6 +48,18 @@ cd backend
 npm install
 ```
 
+### Redis Setup
+
+Make sure Redis is running locally or via Docker:
+
+```bash
+# Using Docker
+docker run -d -p 6379:6379 redis:latest
+
+# Or install locally and run
+redis-server
+```
+
 ### Environment Variables
 
 Create a `.env` file inside `backend/` with:
@@ -56,6 +69,7 @@ PORT=4000
 MONGO_URL=your-mongodb-connection-string
 JWT_SECRET=your_jwt_secret
 CLIENT_URL=http://localhost:3000
+REDIS_URL=redis://localhost:6379
 ```
 
 ### Run the backend
@@ -76,11 +90,11 @@ npm start
 - `POST /login` — login and receive a cookie token
 - `GET /profile` — fetch current user profile
 - `POST /logout` — clear auth cookie
-- `GET /post` — fetch latest posts
-- `GET /post/:id` — fetch a single post
-- `POST /post` — create a post (authenticated)
-- `PUT /post` — update a post (authenticated, author only)
-- `POST /post/:id/clap` — clap a post (authenticated)
+- `GET /post` — fetch latest posts **(Redis cached for 1 hour)**
+- `GET /post/:id` — fetch a single post **(Redis cached for 1 hour)**
+- `POST /post` — create a post (authenticated, invalidates cache)
+- `PUT /post` — update a post (authenticated, author only, invalidates cache)
+- `POST /post/:id/clap` — clap a post (authenticated, invalidates cache)
 - `POST /post/:id/repost` — repost/undo repost (authenticated)
 - `GET /comments/:postId` — fetch comments for a post
 - `POST /comments/:postId` — create a comment or reply (authenticated)
@@ -129,4 +143,70 @@ npm start
 
 - Start backend first so the frontend can connect to the API.
 - Make sure MongoDB is running and `MONGO_URL` is valid.
+- Make sure Redis is running on `localhost:6379` (or update `REDIS_URL` in `.env`).
 - Use `npm run dev` in backend for auto-reload with `nodemon`.
+
+## Caching Architecture & Performance
+
+### How Redis Caching Works
+
+This application implements a **3-layer caching strategy** for optimal performance:
+
+#### Layer 1: Browser Cache (ETag)
+- Static assets (images, fonts) are cached for 7 days with ETag validation
+- Subsequent requests return `304 Not Modified` when content hasn't changed
+- No data transfer, instant response
+
+#### Layer 2: Redis Cache (Application-level)
+- Posts feed (`/post`) — cached for 1 hour under key `posts:all`
+- Individual posts (`/post/:id`) — cached for 1 hour under key `post:{id}`
+- Cache automatically invalidates when:
+  - A new post is created
+  - A post is updated
+  - A post receives a clap
+  - A post is reposted
+- Response headers include `X-Cache: HIT|MISS` and `X-Response-Time` for debugging
+
+#### Layer 3: Database Query (MongoDB)
+- Only executed on cache miss
+- Expensive operation: populates related documents (author, comments, reposts)
+
+### Real Performance Results ✅
+
+**Testing with a single user accessing the same post:**
+
+| Request | Cache Status | Response Time | Source | Headers |
+|---------|--------------|---------------|--------|---------|
+| 1st Request | MISS | **51ms** | MongoDB | `X-Cache: MISS` |
+| 2nd Request | HIT | **5ms** | Redis RAM | `X-Cache: HIT`, `304 Not Modified` |
+
+**Performance Improvement: 10x faster** ⚡
+
+#### Cache MISS (First Request - MongoDB)
+![Redis Cache MISS - 51ms from MongoDB](docs/screenshots/redis-cache-miss.png)
+
+#### Cache HIT (Second Request - Redis)
+![Redis Cache HIT - 5ms from Redis with 304 Not Modified](docs/screenshots/redis-cache-hit.png)
+
+### Interview Talking Points
+
+> "I can prove it live. On the first request you can see `X-Cache: MISS` and `X-Response-Time: 51ms` — that's MongoDB being queried. On the second request you see `X-Cache: HIT` and `X-Response-Time: 5ms` — that's Redis serving from RAM. That's a 10x improvement on a single user. 
+>
+> At scale with hundreds of concurrent users hitting the same post, the difference becomes even more dramatic because MongoDB never gets touched after that first request. The browser also caches with ETags, so you actually have two caching layers working together:
+> - **Browser cache** → `304 Not Modified`, no data transferred
+> - **Redis cache** → `5ms` response from RAM  
+> - **MongoDB** → only on first miss (`51ms`)"
+
+### Cache Invalidation Strategy
+
+Smart cache invalidation ensures data consistency while maximizing cache hits:
+
+```
+CREATE POST      → Invalidates: posts:all
+UPDATE POST :id  → Invalidates: post:id, posts:all
+CLAP POST :id    → Invalidates: post:id, posts:all
+REPOST :id       → Invalidates: post:id, posts:all
+DELETE COMMENT   → No cache impact (comments cached separately)
+```
+
+This ensures users always see accurate data while benefiting from caching on most requests.
