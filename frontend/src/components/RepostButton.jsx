@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiUrl } from "../config";
 
 export default function RepostButton({ postId, initialCount, initialReposted, checkAuth }) {
   const [reposted, setReposted] = useState(initialReposted || false);
@@ -8,7 +9,7 @@ export default function RepostButton({ postId, initialCount, initialReposted, ch
 
     if (!checkAuth()) return;
     try {
-      const response = await fetch(`http://localhost:4000/post/${postId}/repost`, { 
+      const response = await fetch(apiUrl(`/post/${postId}/repost`), { 
         method: "POST",
         headers: {
           "Content-Type": "application/json",

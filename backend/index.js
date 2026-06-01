@@ -1,3 +1,4 @@
+import fs from "fs";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -10,11 +11,29 @@ import commentRoutes from "./routes/commentRoutes.js";
 
 dotenv.config();
 
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads", { recursive: true });
+}
+
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(",").map((origin) => origin.trim())
+  : ["http://localhost:3000"];
+
 const app = express();
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    },
     credentials: true,
   }),
 );
@@ -22,20 +41,37 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/uploads", express.static("uploads", {
-  maxAge: "7d",        //  browser caches images for 7 days
-  etag: true,
-}));
+app.use(
+  "/uploads",
+  express.static("uploads", {
+    maxAge: "7d",
+    etag: true,
+  }),
+);
+
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
+const PORT = process.env.PORT || 4000;
+
+if (!process.env.MONGO_URL) {
+  console.error("MONGO_URL is required");
+  process.exit(1);
+}
 
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log(err));
+  .catch((err) => {
+    console.error("MongoDB connection failed:", err);
+    process.exit(1);
+  });
 
 app.use("/", authRoutes);
 app.use("/", postRoutes);
 app.use("/comments", commentRoutes);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on port ${process.env.PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

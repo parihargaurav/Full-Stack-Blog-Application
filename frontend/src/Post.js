@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { apiUrl } from "./config";
 
 export default function Post({
   _id,
@@ -56,7 +57,7 @@ export default function Post({
       <div className="md:w-[240px]">
         <Link to={`/post/${_id}`}>
           <img
-            src={"http://localhost:4000/" + cover}
+            src={apiUrl(cover)}
             alt=""
             loading="lazy" //  don't load images until needed
             decoding="async" //  don't block rendering

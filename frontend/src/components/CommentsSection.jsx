@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiUrl } from "../config";
 
 function CommentItem({ comment, onReply, currentUserId, onDelete }) {
   const [showReplyBox, setShowReplyBox] = useState(false);
@@ -99,8 +100,8 @@ export default function CommentsSection({ postId, currentUserId, checkAuth }) {
 
   const fetchComments = async () => {
     try {
-      const response = await fetch(`http://localhost:4000/comments/${postId}`, {
-        credentials: "include", //  full URL + cookie
+      const response = await fetch(apiUrl(`/comments/${postId}`), {
+        credentials: "include",
       });
       if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
       const data = await response.json();
@@ -117,13 +118,12 @@ export default function CommentsSection({ postId, currentUserId, checkAuth }) {
     if (!newComment.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/comments/${postId}`, {
+      const response = await fetch(apiUrl(`/comments/${postId}`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          //  removed localStorage token + Authorization header
         },
-        credentials: "include", //  sends cookie
+        credentials: "include",
         body: JSON.stringify({ content: newComment }),
       });
 
@@ -140,13 +140,12 @@ export default function CommentsSection({ postId, currentUserId, checkAuth }) {
   const handleReply = async (content, parentComment) => {
     if (!checkAuth()) return;
     try {
-      const response = await fetch(`http://localhost:4000/comments/${postId}`, {
+      const response = await fetch(apiUrl(`/comments/${postId}`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          //  removed localStorage token + Authorization header
         },
-        credentials: "include", //  sends cookie
+        credentials: "include",
         body: JSON.stringify({ content, parentComment }),
       });
 
@@ -168,14 +167,10 @@ export default function CommentsSection({ postId, currentUserId, checkAuth }) {
 
   const handleDelete = async (commentId) => {
     try {
-      const response = await fetch(
-        `http://localhost:4000/comments/${commentId}`,
-        {
-          method: "DELETE",
-          credentials: "include", //  sends cookie
-          //  removed localStorage token + Authorization header
-        },
-      );
+      const response = await fetch(apiUrl(`/comments/${commentId}`), {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
 

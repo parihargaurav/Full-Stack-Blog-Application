@@ -6,6 +6,7 @@ import { UserContext } from "../UserContext";
 import ClapButton from "../components/ClapButton";
 import RepostButton from "../components/RepostButton";
 import CommentsSection from "../components/CommentsSection";
+import { apiUrl } from "../config";
 
 export default function PostPage() {
   const [postInfo, setPostInfo] = useState(null);
@@ -14,7 +15,7 @@ export default function PostPage() {
   const navigate = useNavigate(); 
 
   useEffect(() => {
-    fetch(`http://localhost:4000/post/${id}`).then((response) => {
+    fetch(apiUrl(`/post/${id}`)).then((response) => {
       response.json().then((postInfo) => {
         setPostInfo(postInfo);
       });
@@ -95,7 +96,7 @@ export default function PostPage() {
       {/* Cover Image */}
       <div className="mb-10 overflow-hidden rounded-2xl">
         <img
-          src={`http://localhost:4000/${postInfo.cover}`}
+          src={apiUrl(postInfo.cover)}
           alt=""
           fetchpriority="high"   // tells browser to load this first
           className="h-60 w-full object-cover"

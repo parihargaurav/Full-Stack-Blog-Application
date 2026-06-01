@@ -3,11 +3,12 @@
 import { Link } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./UserContext";
+import { apiUrl } from "./config";
 
 export default function Header() {
   const { setUserInfo, userInfo } = useContext(UserContext);
   useEffect(() => {
-    fetch("http://localhost:4000/profile", {
+    fetch(apiUrl("/profile"), {
       credentials: "include",
     })
       .then((response) => {
@@ -33,7 +34,7 @@ export default function Header() {
   }, [setUserInfo]);
 
   function logout() {
-    fetch("http://localhost:4000/logout", {
+    fetch(apiUrl("/logout"), {
       credentials: "include",
       method: "POST",
     });

@@ -124,9 +124,73 @@ npm start
 - `/post/:id` — post detail page
 - `/edit/:id` — edit your own post
 
+## Deployment (Vercel + Render)
+
+### 1. MongoDB Atlas
+
+1. Create a free cluster at [MongoDB Atlas](https://www.mongodb.net/atlas).
+2. Create a database user and allow network access (`0.0.0.0/0` for cloud hosts).
+3. Copy the connection string and set it as `MONGO_URL` on Render:
+
+```env
+MONGO_URL=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/Blog?retryWrites=true&w=majority
+```
+
+### 2. Redis (optional but recommended)
+
+Use [Upstash](https://upstash.com/) (free tier) or Render Redis. Set `REDIS_URL` on Render (Upstash uses `rediss://...`). The API still runs if Redis is unavailable.
+
+### 3. Backend on Render
+
+| Setting | Value |
+|---------|--------|
+| Root Directory | `backend` |
+| Build Command | `npm install` |
+| Start Command | `npm start` |
+
+Environment variables:
+
+| Variable | Example |
+|----------|---------|
+| `MONGO_URL` | Atlas connection string |
+| `JWT_SECRET` | long random string |
+| `CLIENT_URL` | `https://your-app.vercel.app` |
+| `REDIS_URL` | Upstash or Render Redis URL |
+
+Render sets `PORT` and `NODE_ENV=production` automatically. Do not set `PORT` manually.
+
+After deploy, open `https://<your-service>.onrender.com/health` — you should see `{"status":"ok"}`.
+
+### 4. Frontend on Vercel
+
+| Setting | Value |
+|---------|--------|
+| Root Directory | `frontend` |
+| Framework Preset | Create React App |
+| Build Command | `npm run build` |
+| Output Directory | `build` |
+
+Environment variable:
+
+| Variable | Value |
+|----------|--------|
+| `REACT_APP_API_URL` | `https://<your-service>.onrender.com` (no trailing slash) |
+
+Redeploy after changing env vars (CRA bakes them in at build time).
+
+### 5. Order of setup
+
+1. Deploy backend on Render first.
+2. Set `CLIENT_URL` to your final Vercel URL (add preview URLs comma-separated if needed).
+3. Deploy frontend on Vercel with `REACT_APP_API_URL` pointing at Render.
+
+### Cover images on Render
+
+Render uses an **ephemeral filesystem** — uploaded images in `backend/uploads/` are lost when the service restarts. For production, use object storage (Cloudinary, S3, etc.). For demos, uploads work until the next redeploy/restart.
+
 ## Notes
 
-- The frontend requests backend routes at `http://localhost:4000`.
+- Locally, the frontend uses `REACT_APP_API_URL` or defaults to `http://localhost:4000`.
 - Authenticated requests send cookies using `credentials: "include"`.
 - Uploaded images are served from `backend/uploads`.
 - The backend verifies JWT tokens from cookies on protected routes.
@@ -135,7 +199,7 @@ npm start
 
 - `frontend/public/index.html` includes a `meta description` for search and sharing.
 - The HTML includes `viewport` and `theme-color` meta tags for mobile-friendly rendering.
-- A `link rel="preconnect"` to `http://localhost:4000` is added for backend asset performance.
+- Cover images are loaded from the API URL configured via `REACT_APP_API_URL`.
 - The app uses semantic structure with `<main>`, `<header>`, and accessible navigation.
 - The site includes a favicon and PWA manifest references to improve browser metadata.
 

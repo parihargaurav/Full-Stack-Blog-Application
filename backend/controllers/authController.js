@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import User from "../models/User.js";
+import { getAuthCookieOptions } from "../utils/cookieOptions.js";
 
 const salt = bcrypt.genSaltSync(10);
 
@@ -47,7 +48,7 @@ export const loginUser = async (req, res) => {
         return res.status(500).json(err);
       }
 
-      res.cookie("token", token).json({
+      res.cookie("token", token, getAuthCookieOptions()).json({
         id: userDoc._id,
         username,
       });
@@ -72,5 +73,6 @@ export const getProfile = (req, res) => {
 };
 
 export const logoutUser = (req, res) => {
-  res.cookie("token", "").json("User logged out");
+  res.clearCookie("token", getAuthCookieOptions());
+  res.json("User logged out");
 };

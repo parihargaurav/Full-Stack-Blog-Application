@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { apiUrl } from "../config";
 
 export default function ClapButton({ postId, initialClaps, initialUserClaps, checkAuth  }) {
   const [totalClaps, setTotalClaps] = useState(initialClaps || 0);
@@ -14,7 +15,7 @@ export default function ClapButton({ postId, initialClaps, initialUserClaps, che
 
     try {
 
-      const response = await fetch(`http://localhost:4000/post/${postId}/clap`, {
+      const response = await fetch(apiUrl(`/post/${postId}/clap`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
