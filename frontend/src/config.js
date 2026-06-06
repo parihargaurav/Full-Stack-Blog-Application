@@ -9,4 +9,9 @@ export function apiUrl(path = "") {
   return `${API_URL}${normalized}`;
 }
 
+export function imageUrl(path) {
+  if (!path) return "";
+  return path.startsWith("http") ? path : apiUrl(path);
+}
+
 export { API_URL };

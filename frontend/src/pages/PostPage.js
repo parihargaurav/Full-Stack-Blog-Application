@@ -6,10 +6,11 @@ import { UserContext } from "../UserContext";
 import ClapButton from "../components/ClapButton";
 import RepostButton from "../components/RepostButton";
 import CommentsSection from "../components/CommentsSection";
-import { apiUrl } from "../config";
+import { apiUrl, imageUrl } from "../config";
 
 export default function PostPage() {
   const [postInfo, setPostInfo] = useState(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const { userInfo } = useContext(UserContext);
   const { id } = useParams();
   const navigate = useNavigate(); 
@@ -38,12 +39,14 @@ export default function PostPage() {
   //  single guard function used by all protected actions
   const checkAuth = () => {
     if (!userInfo) {
-      alert("Please login to interact with this post!");
-      navigate("/login");
+      setShowLoginDialog(true);
       return false;
     }
     return true;
   };
+
+  const closeLoginDialog = () => setShowLoginDialog(false);
+  const goToLogin = () => navigate("/login");
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -96,7 +99,7 @@ export default function PostPage() {
       {/* Cover Image */}
       <div className="mb-10 overflow-hidden rounded-2xl">
         <img
-          src={apiUrl(postInfo.cover)}
+          src={imageUrl(postInfo.cover)}
           alt=""
           fetchpriority="high"   // tells browser to load this first
           className="h-60 w-full object-cover"
@@ -139,6 +142,35 @@ export default function PostPage() {
         currentUserId={userInfo?.id}
         checkAuth={checkAuth} 
       />
+
+      {showLoginDialog ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              Login required
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Please login to interact with this post. You can login now or cancel and continue browsing.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeLoginDialog}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={goToLogin}
+                className="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-black transition-colors duration-200"
+              >
+                Login
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

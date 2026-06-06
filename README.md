@@ -28,9 +28,10 @@ This project includes:
 ## Tech Stack
 
 - Frontend: React, React Router, Tailwind CSS, React Quill
-- Backend: Node.js, Express, Mongoose, JWT, Multer
+- Backend: Node.js, Express, Mongoose, JWT, Multer, Cloudinary
 - Database: MongoDB with Redis caching layer
-- Cache: Redis (in-memory data store for high-performance caching)
+- Cache: Upstash Redis / Redis (in-memory data store for high-performance caching)
+- File uploads: Cloudinary for production image storage
 - Authentication: secure cookies and JSON Web Tokens
 
 ## Repository Structure
@@ -50,7 +51,7 @@ npm install
 
 ### Redis Setup
 
-Make sure Redis is running locally or via Docker:
+For local development, run Redis locally or with Docker, or connect to Upstash for remote caching.
 
 ```bash
 # Using Docker
@@ -59,6 +60,8 @@ docker run -d -p 6379:6379 redis:latest
 # Or install locally and run
 redis-server
 ```
+
+If you use Upstash, set `REDIS_URL` and `REDIS_TOKEN` in your backend `.env`. The backend will still work without Redis, but caching will be disabled.
 
 ### Environment Variables
 
@@ -69,8 +72,15 @@ PORT=4000
 MONGO_URL=your-mongodb-connection-string
 JWT_SECRET=your_jwt_secret
 CLIENT_URL=http://localhost:3000
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 REDIS_URL=redis://localhost:6379
+REDIS_TOKEN=your_upstash_token
 ```
+
+- `REDIS_URL` can point to local Redis or an Upstash Redis URL.
+- `REDIS_TOKEN` is required for Upstash and can be left empty for local Redis.
 
 ### Run the backend
 
@@ -155,7 +165,11 @@ Environment variables:
 | `MONGO_URL` | Atlas connection string |
 | `JWT_SECRET` | long random string |
 | `CLIENT_URL` | `https://your-app.vercel.app` |
+| `CLOUDINARY_CLOUD_NAME` | `your-cloud-name` |
+| `CLOUDINARY_API_KEY` | `your-api-key` |
+| `CLOUDINARY_API_SECRET` | `your-api-secret` |
 | `REDIS_URL` | Upstash or Render Redis URL |
+| `REDIS_TOKEN` | Upstash token (required for Upstash only) |
 
 Render sets `PORT` and `NODE_ENV=production` automatically. Do not set `PORT` manually.
 
@@ -186,7 +200,7 @@ Redeploy after changing env vars (CRA bakes them in at build time).
 
 ### Cover images on Render
 
-Render uses an **ephemeral filesystem** — uploaded images in `backend/uploads/` are lost when the service restarts. For production, use object storage (Cloudinary, S3, etc.). For demos, uploads work until the next redeploy/restart.
+Render uses an **ephemeral filesystem** — uploaded images in `backend/uploads/` are lost when the service restarts. For production, use Cloudinary (recommended) or another object storage provider such as S3. Cloudinary is already configured in this app and used for production-ready image uploads.
 
 ## Notes
 

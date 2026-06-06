@@ -1,4 +1,3 @@
-import fs from "fs";
 import jwt from "jsonwebtoken";
 
 import Post from "../models/Post.js";
@@ -6,70 +5,46 @@ import redis from "../config/redis.js";
 
 export const createPost = async (req, res) => {
   try {
-    const { originalname, path } = req.file;
+    if (!req.file) {
+      return res.status(400).json("Image file is required");
+    }
 
-    const parts = originalname.split(".");
-    const ext = parts[parts.length - 1];
+    const coverUrl = req.file.path;
+    const userId = req.user?.id;
 
-    const newPath = path + "." + ext;
+    if (!userId) {
+      return res.status(401).json({ message: "No user id found in token" });
+    }
 
-    fs.renameSync(path, newPath);
+    const { title, summary, content } = req.body;
 
-    const { token } = req.cookies;
-
-    jwt.verify(token, process.env.JWT_SECRET, {}, async (err, info) => {
-      if (err) {
-        return res.status(401).json(err);
-      }
-
-      const { title, summary, content } = req.body;
-
-      const postDoc = await Post.create({
-        title,
-        summary,
-        content,
-        cover: newPath,
-        author: info.id,
-      });
-
-      /*
-      |--------------------------------------------------------------------------
-      | CACHE INVALIDATION
-      |--------------------------------------------------------------------------
-      | New post affects:
-      | - homepage feed
-      | - latest posts
-      */
-
-      await redis.del("posts:all");
-
-      console.log("Redis cache invalidated ✅ posts:all");
-
-      res.json(postDoc);
+    const postDoc = await Post.create({
+      title,
+      summary,
+      content,
+      cover: coverUrl,
+      author: userId,
     });
 
+    await redis.del("posts:all");
+    console.log("Redis cache invalidated ✅ posts:all");
+
+    res.json(postDoc);
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Internal server error",
-    });
+    console.error("createPost error FULL:", JSON.stringify(error, null, 2));
+console.error("createPost error MESSAGE:", error.message);
+console.error("createPost error STACK:", error.stack);
+    res.status(500).json({ message: error.message });
   }
 };
 
 export const updatePost = async (req, res) => {
   try {
-    let newPath = null;
+    let coverUrl = null;
 
     if (req.file) {
-      const { originalname, path } = req.file;
-
-      const parts = originalname.split(".");
-      const ext = parts[parts.length - 1];
-
-      newPath = `${path}.${ext}`;
-
-      fs.renameSync(path, newPath);
+      // Cloudinary path is already a URL
+      coverUrl = req.file.path;
     }
 
     const { token } = req.cookies;
@@ -105,8 +80,8 @@ export const updatePost = async (req, res) => {
       postDoc.summary = summary;
       postDoc.content = content;
 
-      if (newPath) {
-        postDoc.cover = newPath;
+      if (coverUrl) {
+        postDoc.cover = coverUrl;
       }
 
       await postDoc.save();
@@ -128,11 +103,37 @@ export const updatePost = async (req, res) => {
 
       res.json(postDoc);
     });
-
   } catch (error) {
     console.error(error);
 
     res.status(500).json("Internal server error");
+  }
+};
+
+export const deletePost = async (req, res) => {
+  try {
+    const postDoc = await Post.findById(req.params.id);
+
+    if (!postDoc) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (postDoc.author.toString() !== req.user.id) {
+      return res.status(403).json({ message: "You are not the author" });
+    }
+
+    await Post.deleteOne({ _id: req.params.id });
+
+    await redis.del(`post:${req.params.id}`);
+    await redis.del("posts:all");
+
+    console.log(`Redis cache invalidated ✅ post:${req.params.id}`);
+    console.log("Redis cache invalidated ✅ posts:all");
+
+    res.json({ message: "Post deleted" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -158,7 +159,19 @@ export const getPosts = async (req, res) => {
       res.set("X-Cache", "HIT");
       res.set("X-Response-Time", `${Date.now() - start}ms`);
 
-      return res.json(JSON.parse(cachedPosts));
+      const cachedValue =
+        typeof cachedPosts === "string"
+          ? cachedPosts
+          : JSON.stringify(cachedPosts);
+
+      try {
+        return res.json(JSON.parse(cachedValue));
+      } catch (parseError) {
+        console.warn(
+          "Invalid cache format for posts:all, skipping cache",
+          parseError.message,
+        );
+      }
     }
 
     console.log("Cache MISS ❌", cacheKey);
@@ -182,11 +195,7 @@ export const getPosts = async (req, res) => {
     */
 
     // Cache for 1 hour
-    await redis.setEx(
-      cacheKey,
-      3600,
-      JSON.stringify(posts)
-    );
+    await redis.set(cacheKey, JSON.stringify(posts), { ex: 3600 });
 
     /*
     |--------------------------------------------------------------------------
@@ -198,13 +207,9 @@ export const getPosts = async (req, res) => {
     res.set("X-Response-Time", `${Date.now() - start}ms`);
 
     res.json(posts);
-
   } catch (err) {
-    console.error(err);
-
-    res.status(500).json({
-      message: err.message,
-    });
+    console.error("getPosts error:", err.message); // check terminal
+    res.status(500).json({ message: err.message }); // see it in browser too
   }
 };
 
@@ -231,7 +236,19 @@ export const getSinglePost = async (req, res) => {
       res.set("X-Cache", "HIT");
       res.set("X-Response-Time", `${Date.now() - start}ms`);
 
-      return res.json(JSON.parse(cachedPost));
+      const cachedValue =
+        typeof cachedPost === "string"
+          ? cachedPost
+          : JSON.stringify(cachedPost);
+
+      try {
+        return res.json(JSON.parse(cachedValue));
+      } catch (parseError) {
+        console.warn(
+          `Invalid cache format for ${cacheKey}, skipping cache`,
+          parseError.message,
+        );
+      }
     }
 
     console.log("Cache MISS ❌", cacheKey);
@@ -241,8 +258,7 @@ export const getSinglePost = async (req, res) => {
     | 2. FETCH FROM DB
     |--------------------------------------------------------------------------
     */
-    const postDoc = await Post.findById(id)
-      .populate("author", ["username"]);
+    const postDoc = await Post.findById(id).populate("author", ["username"]);
 
     if (!postDoc) {
       return res.status(404).json({
@@ -255,12 +271,7 @@ export const getSinglePost = async (req, res) => {
     | 3. STORE IN REDIS
     |--------------------------------------------------------------------------
     */
-    await redis.setEx(
-      cacheKey,
-      3600,
-      JSON.stringify(postDoc)
-    );
-
+    await redis.set(cacheKey, JSON.stringify(postDoc), { ex: 3600 });
     /*
     |--------------------------------------------------------------------------
     | 4. RESPONSE HEADERS
@@ -270,7 +281,6 @@ export const getSinglePost = async (req, res) => {
     res.set("X-Response-Time", `${Date.now() - start}ms`);
 
     res.json(postDoc);
-
   } catch (err) {
     console.error(err);
 
@@ -295,9 +305,7 @@ export const clapPost = async (req, res) => {
     // how many claps this click adds (1–10)
     const { count = 1 } = req.body;
 
-    const existing = post.clappedBy.find(
-      (c) => c.user.toString() === userId
-    );
+    const existing = post.clappedBy.find((c) => c.user.toString() === userId);
 
     if (existing) {
       // Max 50 claps per user
@@ -308,7 +316,6 @@ export const clapPost = async (req, res) => {
       existing.count = newCount;
 
       post.claps += added;
-
     } else {
       post.clappedBy.push({
         user: userId,
@@ -332,25 +339,18 @@ export const clapPost = async (req, res) => {
     // Remove feed cache because clap count changes there too
     await redis.del("posts:all");
 
-    console.log(
-      `Redis cache invalidated ✅ post:${req.params.id}`
-    );
+    console.log(`Redis cache invalidated ✅ post:${req.params.id}`);
 
-    console.log(
-      "Redis cache invalidated ✅ posts:all"
-    );
+    console.log("Redis cache invalidated ✅ posts:all");
 
     // Return user's personal clap count + total
     const userClaps =
-      post.clappedBy.find(
-        (c) => c.user.toString() === userId
-      )?.count || 0;
+      post.clappedBy.find((c) => c.user.toString() === userId)?.count || 0;
 
     res.json({
       totalClaps: post.claps,
       userClaps,
     });
-
   } catch (err) {
     console.error(err);
 
@@ -371,13 +371,13 @@ export const repostPost = async (req, res) => {
 
     // Check if user already reposted
     const alreadyReposted = originalPost.reposts.some(
-      (id) => id.toString() === userId
+      (id) => id.toString() === userId,
     );
 
     if (alreadyReposted) {
       // Undo repost
       originalPost.reposts = originalPost.reposts.filter(
-        (id) => id.toString() !== userId
+        (id) => id.toString() !== userId,
       );
       originalPost.repostCount = Math.max(0, originalPost.repostCount - 1);
       await originalPost.save();
@@ -388,7 +388,10 @@ export const repostPost = async (req, res) => {
         repostedBy: userId,
       });
 
-      return res.json({ reposted: false, repostCount: originalPost.repostCount });
+      return res.json({
+        reposted: false,
+        repostCount: originalPost.repostCount,
+      });
     }
 
     // Add repost

@@ -1,4 +1,3 @@
-import fs from "fs";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -10,10 +9,6 @@ import postRoutes from "./routes/postRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 
 dotenv.config();
-
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads", { recursive: true });
-}
 
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(",").map((origin) => origin.trim())
@@ -41,14 +36,6 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(
-  "/uploads",
-  express.static("uploads", {
-    maxAge: "7d",
-    etag: true,
-  }),
-);
-
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
@@ -64,7 +51,7 @@ mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => {
-    console.error("MongoDB connection failed:", err);
+    console.error("MongoDB connection failed:", err.message);
     process.exit(1);
   });
 

@@ -1,10 +1,16 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiUrl } from "../config";
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+
   async function register(ev) {
     ev.preventDefault();
     const response = await fetch(apiUrl("/register"), {
@@ -12,12 +18,20 @@ export default function RegisterPage() {
       body: JSON.stringify({ username, password }),
       headers: { "Content-Type": "application/json" },
     });
+
     if (response.status === 200) {
-      alert("registration successful");
+      setDialogMessage("Registration successful. Please login to continue.");
+      setIsSuccess(true);
+      setShowDialog(true);
     } else {
-      alert("registration failed");
+      setDialogMessage("Registration failed. Please check your details and try again.");
+      setIsSuccess(false);
+      setShowDialog(true);
     }
   }
+
+  const closeDialog = () => setShowDialog(false);
+  const goToLogin = () => navigate("/login");
   return (
   <div className="min-h-screen bg-white flex items-center justify-center px-4">
     <div className="w-full max-w-sm">
@@ -98,9 +112,35 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      
-
+      {showDialog ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              {isSuccess ? "Success" : "Registration error"}
+            </h2>
+            <p className="text-sm text-gray-600 mb-6">{dialogMessage}</p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeDialog}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200"
+              >
+                Close
+              </button>
+              {isSuccess ? (
+                <button
+                  type="button"
+                  onClick={goToLogin}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-black transition-colors duration-200"
+                >
+                  Login
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   </div>
-);
+  );
 }

@@ -10,17 +10,17 @@ export default function EditPost() {
   const [content, setContent] = useState("");
   const [files, setFiles] = useState("");
   const [redirect, setRedirect] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    fetch(apiUrl(`/post/${id}`)).then((response) => {
-      response.json().then((postInfo) => {
-        setTitle(postInfo.title);
-        setContent(postInfo.content);
-        setSummary(postInfo.summary);
-      });
+  fetch(apiUrl(`/post/${id}`))
+    .then((response) => response.json())
+    .then((postInfo) => {
+      setTitle(postInfo.title ?? "");      
+      setContent(postInfo.content ?? "");
+      setSummary(postInfo.summary ?? "");
     });
-  }, [id]);
-
+}, [id]);
   async function updatePost(ev) {
     ev.preventDefault();
     const data = new FormData();
@@ -41,8 +41,38 @@ export default function EditPost() {
     }
   }
 
+  async function deletePost() {
+    setShowDeleteConfirm(true);
+  }
+
+  async function confirmDelete() {
+    setShowDeleteConfirm(false);
+
+    const response = await fetch(apiUrl(`/post/${id}`), {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (response.ok) {
+      setRedirect(true);
+    } else {
+      let message = await response.text();
+      try {
+        const json = JSON.parse(message);
+        message = json.message || JSON.stringify(json);
+      } catch (err) {
+        // ignore parse issue
+      }
+      alert("Delete failed: " + message);
+    }
+  }
+
+  function cancelDelete() {
+    setShowDeleteConfirm(false);
+  }
+
   if (redirect) {
-    return <Navigate to={"/post/" + id} />;
+    return <Navigate to={'/'} />;
   }
 
   return (
@@ -122,17 +152,50 @@ export default function EditPost() {
         </div>
 
         {/* Submit */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 gap-4">
           <button
             type="submit"
             className="px-8 py-3 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-colors duration-200 tracking-wide"
           >
             Update Story
           </button>
+          <button
+            type="button"
+            onClick={deletePost}
+            className="px-6 py-3 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors duration-200 tracking-wide"
+          >
+            Delete Post
+          </button>
         </div>
 
       </form>
+
+      {showDeleteConfirm ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Confirm delete</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this post? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={cancelDelete}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors duration-200"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   </div>
 );
