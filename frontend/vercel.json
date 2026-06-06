@@ -1,3 +1,5 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
   "rewrites": [{ "source": "/((?!static/).*)", "destination": "/index.html" }]
 }
